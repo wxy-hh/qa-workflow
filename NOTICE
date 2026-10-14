@@ -1,0 +1,19 @@
+# NOTICE
+
+本仓库包含 vendored（随源码再分发）的第三方技能，均保留原许可：
+
+## mattpocock/skills
+
+- 来源：https://github.com/mattpocock/skills
+- 许可：MIT License，Copyright (c) 2026 Matt Pocock
+- 快照时间：2026-10（对齐上游 main 分支）
+- 范围：`skills/` 下除 `setup-qa-workflow`、`qa-test-planner` 外的全部技能
+- 本地改动：为配合 qa-workflow 流水线做了定制注入，注入点以「项目定制」标记注明；
+  `implement`、`implement-spec` 中的 `{CORE_LINKS}` 为占位符，由 `/setup-qa-workflow` 在宿主项目
+  scaffold 时替换为该项目确认的核心链路清单。
+- 上游许可全文见 https://github.com/mattpocock/skills/blob/main/LICENSE
+
+## 引用但不捆绑
+
+- `ego-browser` 技能（https://github.com/citrolabs/ego-lite）：工作流阶段 5 的推荐浏览器
+  自动化工具，本仓库不包含其代码，由用户按自身环境选择安装。

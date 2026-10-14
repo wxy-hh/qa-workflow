@@ -1,0 +1,25 @@
+{
+  "name": "wxy-hh",
+  "owner": {
+    "name": "位笑雨",
+    "url": "https://github.com/wxy-hh"
+  },
+  "description": "qa-workflow：以质量保证为纲的研发闭环工作流技能包（Claude Code / Codex / Kimi Code 等编码 Agent 通用）。",
+  "plugins": [
+    {
+      "name": "qa-workflow",
+      "source": "./",
+      "description": "QA closed-loop engineering workflow for coding agents: spec → tickets/qa-plan → TDD → real-browser acceptance → dual-axis review → PR evidence.",
+      "category": "engineering",
+      "keywords": [
+        "qa",
+        "workflow",
+        "engineering",
+        "skills",
+        "tdd",
+        "code-review",
+        "browser-testing"
+      ]
+    }
+  ]
+}

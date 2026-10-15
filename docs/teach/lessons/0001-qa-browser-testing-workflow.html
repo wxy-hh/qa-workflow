@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI-Aggregation 研发与真实浏览器真机测试闭环工作流实战教程</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid.js -->
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap');
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #1e293b;
+        background-color: #f8fafc;
+      }
+      .font-serif-title {
+        font-family: 'Noto Serif SC', serif;
+      }
+      .font-mono-code {
+        font-family: 'Fira Code', monospace;
+      }
+      .deep-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      }
+      .quiz-option {
+        transition: all 0.2s ease;
+      }
+      .quiz-option:hover {
+        background-color: #f1f5f9;
+        border-color: #94a3b8;
+      }
+      .quiz-option.correct {
+        background-color: #f0fdf4 !important;
+        border-color: #22c55e !important;
+        color: #15803d !important;
+      }
+      .quiz-option.wrong {
+        background-color: #fef2f2 !important;
+        border-color: #ef4444 !important;
+        color: #b91c1c !important;
+      }
+    </style>
+  </head>
+  <body class="selection:bg-blue-100 selection:text-blue-900 pb-24">
+    <!-- 顶部导航栏 -->
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 px-6 py-3.5 mb-8">
+      <div class="max-w-5xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <span class="px-2.5 py-0.5 text-xs font-bold rounded bg-blue-600 text-white tracking-wider">LESSON 0001 · 最新实战版</span>
+          <span class="text-sm font-semibold text-slate-800">AI-Aggregation 研发与测试闭环全景教学</span>
+        </div>
+        <div class="flex items-center space-x-4 text-xs font-medium text-slate-600">
+          <a href="../MISSION.md" class="hover:text-blue-600 transition-colors">教学使命 (Mission)</a>
+          <a href="../GLOSSARY.md" class="hover:text-blue-600 transition-colors">统一词汇表</a>
+          <a href="../../agents/qa-workflow-guide.md" class="hover:text-blue-600 transition-colors">实战指南 (Guide)</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <main class="max-w-4xl mx-auto px-6 space-y-12">
+      <!-- 课程标题头部 -->
+      <header class="space-y-4 border-b border-slate-200 pb-8">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>高确定性工程质量守则 · 全员研发规范</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 font-serif-title">
+          研发与真实浏览器真机测试闭环工作流实战教程
+        </h1>
+        <p class="text-base text-slate-600 leading-relaxed">
+          杜绝“单测假绿灯、线上全白屏”、“口头提需求、上线推倒重来”。本课程完整拆解基于 <strong>Matt Pocock Skills 开源体系</strong> 深度演进的端到端工程闭环：涵盖需求高压盘问、双轨联动规划、三大编码范式、真实 Chromium 浏览器真机验收门禁与双轴代码审查。
+        </p>
+        <div class="flex flex-wrap gap-4 pt-2 text-xs text-slate-500 font-mono-code">
+          <span>🎯 学习目标：掌握 7 大阶段执行、三大编码范式与真实验收</span>
+          <span>⏱ 建议学习时长：20 分钟</span>
+          <span>📦 关联仓库：AI-aggregation Monorepo</span>
+        </div>
+      </header>
+
+      <!-- 一、背景痛点与设计哲学 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">1</span>
+          为什么必须建立这套工作流？
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-5 rounded-xl border border-red-200 bg-red-50/30 space-y-3">
+            <div class="text-sm font-bold text-red-700 flex items-center gap-2">
+              <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              传统粗放 AI 编码的恶性死循环
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong>盲目直接写码</strong>：一句话需求，AI 乱改十几个文件，跑起来发现方向完全跑偏。</li>
+              <li><strong>单测假绿灯忽悠</strong>：纯内存 Mock 单测全绿，但真实浏览器里样式遮挡、水合假死、白屏崩溃。</li>
+              <li><strong>环境故障盲改代码</strong>：上游大模型欠费 403 或端口未起，误当成业务代码写错而盲目推倒。</li>
+              <li><strong>交付靠猜无凭无据</strong>：PR 仅附一两句口头描述，代码审查者根本不知道到底测过没有。</li>
+            </ul>
+          </div>
+
+          <div class="p-5 rounded-xl border border-emerald-200 bg-emerald-50/30 space-y-3">
+            <div class="text-sm font-bold text-emerald-800 flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              高确定性闭环破解之道
+            </div>
+            <ul class="text-xs text-slate-700 space-y-2 list-disc list-inside">
+              <li><strong>未对齐不写码</strong>：先触发 <code>/grill-with-docs</code> 审问边界并落盘不可篡改的 <code>spec.md</code>。</li>
+              <li><strong>真实浏览器真机验收</strong>：核心链路必须用真实 Chromium（<code>ego-browser</code>）逐条冒烟并抓图落盘。</li>
+              <li><strong>三层隔离探针定界</strong>：先探活，用单文件微脚本分层隔离网络防火墙、官方 SDK 与业务逻辑。</li>
+              <li><strong>双轴审查与证据闭环</strong>：Standards 规范轴 + Spec 需求轴硬门禁，PR 自动嵌入对比截图。</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 理论溯源与演进对比 -->
+        <div class="deep-card rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+              <h3 class="text-sm font-bold text-slate-900">理论奠基与演进：Matt Pocock 原版体系 vs 本项目实战改造</h3>
+            </div>
+            <span class="text-xs text-slate-400 font-mono-code">github.com/mattpocock/skills</span>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            本工作流思想奠基于英国著名前端架构师 <strong>Matt Pocock</strong> 的开源技能体系。我们在继承其需求盘问、规格确立、TDD 与双轴审查核心思想的基础上，针对全栈 Web 业务实战进行了<strong>六大维度的系统性改造跃迁</strong>：
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-slate-50 text-slate-700 border-b border-slate-200">
+                  <th class="p-2.5 font-semibold w-1/4">对比维度</th>
+                  <th class="p-2.5 font-semibold w-1/3">Matt Pocock 原版技能体系</th>
+                  <th class="p-2.5 font-semibold w-5/12">本项目实战改造 (AI-Aggregation)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600">
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">1. 验收硬防线</td>
+                  <td class="p-2.5">纯内存单测（Vitest/Jest）全绿闭环</td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>真实浏览器真机验收门禁 (阶段 5)</strong>：优先前台可视 Chromium (<code>ego-browser</code>) 抓图落盘</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">2. 规划视点</td>
+                  <td class="p-2.5">开发者顺向单轨，直接由 spec 拆工单编码</td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>研发轨 (3A) 与测试轨 (3B) 双轨联动</strong>：自动派发 <code>/qa-test-planner</code> 提前锁定冒烟用例与断言契约</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">3. 协作轮次摩擦</td>
+                  <td class="p-2.5">默认单工单逐步推进，每做完一张停下等待确认</td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>批量冲刺 (<code>--all</code>) 与并发派发 (<code>/implement-spec</code>)</strong>：自动拓扑推进，将 10+ 轮交互打断压缩至 1 轮</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">4. 代码审查机制</td>
+                  <td class="p-2.5">原创 Standards + Spec 双轴子代理，侧重产出建议</td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>交付前硬门禁 + 三档分流闭环</strong>：注入平台安全/移动端44px规范，改动触及核心强制重回真机复验截图</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">5. 工作区落盘</td>
+                  <td class="p-2.5">GitHub 强依赖，交接文件默认存系统 <code>/tmp</code></td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>纯本地 Markdown Tracker (<code>.scratch/</code>)</strong>：零外部依赖，交接严格收敛于工作区，严禁散落至临时目录</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-bold text-slate-800">6. 组织协同范式</td>
+                  <td class="p-2.5">松耦合、供开发者按需手动调用的“热插拔技能箱”</td>
+                  <td class="p-2.5 text-emerald-800 font-medium"><strong>制度化流水线 + 快慢车道自适应工程剪裁</strong>：快车道小改动免大 Spec 秒级直达，核心链路制度化守死底线</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 双轮驱动设计哲学 -->
+          <div class="mt-4 p-4 rounded-lg bg-blue-50/50 border border-blue-200 space-y-2">
+            <span class="text-xs font-bold text-blue-800 uppercase tracking-wider block">双轮驱动的完整工程心智模型</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="bg-white p-3 rounded border border-blue-100">
+                <strong class="text-slate-900 block mb-1">🚊 轮子一：工作流主干道 (qa-workflow.md) ── 保交付下限</strong>
+                <span class="text-slate-600">规定“什么时候做什么”，通过真机卡点、双轴审查和截图证据链，筑牢工程交付的基准质量红线。</span>
+              </div>
+              <div class="bg-white p-3 rounded border border-blue-100">
+                <strong class="text-slate-900 block mb-1">🕹️ 轮子二：思维快捷键 (prompt-shortcuts.md) ── 拔认知上限</strong>
+                <span class="text-slate-600">不让流水线自动跑过度设计，而是为工程师配备「第一性原理」、「对抗性审查」等杠杆短语，在关键节点按需打破盲区。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 二、技能权限矩阵 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">2</span>
+          技能权限矩阵：命令到底由谁来触发？
+        </h2>
+        <div class="deep-card rounded-xl p-6 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 开发者独占命令 -->
+            <div class="space-y-3 border-r-0 md:border-r border-slate-200 pr-0 md:pr-6">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                <span class="text-sm font-bold text-slate-900">开发者独占闸门命令（模型被禁调）</span>
+              </div>
+              <p class="text-xs text-slate-500">
+                声明了 <code>disable-model-invocation: true</code>，<strong>模型绝对无法自主发起调用</strong>，必须由人类在对话框手动敲入：
+              </p>
+              <div class="space-y-1.5 font-mono-code text-xs">
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>/grill-with-docs</strong> — 启动需求高压盘问并产出 ADR
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>/to-spec</strong> — 锁定技术规格 spec.md 契约
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>/implement</strong> / <strong>/implement-spec</strong> — 授权开工编码
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>/handoff</strong> — 浓缩会话生成工作区交接文档
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>/grill-me</strong> — 轻量级思维漏洞推演
+                </div>
+              </div>
+              <div class="text-xs text-amber-800 bg-amber-50 p-2.5 rounded border border-amber-200">
+                🛡️ <strong>防呆理念：</strong> 防止模型“自问自答、自写规格、自行验收”，确保人类工程师始终掌控架构决策权。
+              </div>
+            </div>
+
+            <!-- 通用协同技能 -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span class="text-sm font-bold text-slate-900">通用协同技能（双向均可调用）</span>
+              </div>
+              <p class="text-xs text-slate-500">
+                <strong>模型可在流水线中按需自主触发，开发者也可随时手动输入调用：</strong>
+              </p>
+              <div class="space-y-1.5 font-mono-code text-xs">
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>qa-test-planner</strong> — 规格生成后自动规划测试集
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>tdd</strong> — 编码阶段驱动单测红-绿-重构循环
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>ego-browser</strong> — 自动拉起前台真实 Chromium 冒烟抓图
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>diagnosing-bugs</strong> — 冒烟遇到 FAIL 时自动诊断排障
+                </div>
+                <div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-800">
+                  <strong>code-review</strong> / <strong>pr</strong> / <strong>retro</strong>
+                </div>
+              </div>
+              <div class="text-xs text-blue-700 bg-blue-50 p-2.5 rounded border border-blue-200">
+                💡 <strong>提示：</strong> 日常遇到怪异报错随时敲 <code>/diagnosing-bugs</code>；调试前端随时敲 <code>/ego-browser</code>。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 三、全景闭环七大阶段 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">3</span>
+          全景闭环流程与核心产物深度剖析
+        </h2>
+
+        <!-- Mermaid 全景流程图 -->
+        <div class="deep-card rounded-xl p-5 overflow-x-auto">
+          <pre class="mermaid text-xs">
+flowchart TD
+    subgraph P1 ["阶段 1 & 2 · 前期收敛与规格确立"]
+        A["1. 需求盘问与领域对齐 (/grill-with-docs)"] --> B["2. 技术规格确立 (/to-spec)"]
+    end
+
+    subgraph P2 ["阶段 3 · 双轨联动规划"]
+        B --> C1["3A. 研发轨：任务拓扑拆解 (/to-tickets)"]
+        B --> C2["3B. 测试轨：测试集规划 (/qa-test-planner)"]
+    end
+
+    subgraph P3 ["阶段 4 · 受控编码构建 (三大范式)"]
+        C1 --> D["4. 编码实现 (/implement + TDD)"]
+    end
+
+    subgraph P4 ["阶段 5 & 6 · 真机浏览器验收与审查门禁"]
+        D --> E["5. 真实浏览器真机验收 (ego-browser / Playwright)"]
+        C2 -.->|"注入验收契约"| E
+        E -->|"FAIL: 报错/交互异常"| H{{"自愈诊断回路 (diagnosing-bugs)"}}
+        H -->|"修复后重新回归"| E
+        E -->|"全量 PASS: 截图落盘"| F["6. 双轴代码审查 (code-review 门禁)"]
+    end
+
+    subgraph P5 ["阶段 7 · 交付发布与经验沉淀"]
+        F --> G["7. 交付发布与沉淀 (/pr + /retro)"]
+    end
+
+    style P1 fill:#eff6ff,stroke:#3b82f6,stroke-width:2px
+    style P2 fill:#fefce8,stroke:#eab308,stroke-width:2px
+    style P3 fill:#f0fdf4,stroke:#22c55e,stroke-width:2px
+    style P4 fill:#fdf2f8,stroke:#ec4899,stroke-width:2px
+    style P5 fill:#faf5ff,stroke:#a855f7,stroke-width:2px
+    style H fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+          </pre>
+        </div>
+
+        <!-- 阶段 4：三大实现范式详解 -->
+        <div class="deep-card rounded-xl p-6 space-y-4">
+          <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <h3 class="text-sm font-bold text-slate-900">核心进阶：阶段 4 的三大实现范式</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-lg space-y-1.5">
+              <span class="font-bold text-slate-800 block">模式 A：单工单调试模式</span>
+              <code class="text-blue-600 block font-mono-code font-bold">/implement 工单 01</code>
+              <p class="text-slate-600">单任务做完即停，向人类汇报并交出控制权。适合高危架构重构或疑难缺陷探索。</p>
+            </div>
+            <div class="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-lg space-y-1.5">
+              <span class="font-bold text-emerald-900 block">模式 B：单会话批量冲刺 (推荐)</span>
+              <code class="text-emerald-700 block font-mono-code font-bold">/implement --all</code>
+              <p class="text-slate-600">在当前分支顺次沿 DAG 依赖全速实现，状态自动翻转为 done，单测全绿后主动流转阶段 5。</p>
+            </div>
+            <div class="p-3.5 bg-purple-50/50 border border-purple-200 rounded-lg space-y-1.5">
+              <span class="font-bold text-purple-900 block">模式 C：并发派发模式</span>
+              <code class="text-purple-700 block font-mono-code font-bold">/implement-spec</code>
+              <p class="text-slate-600">自动拉出集成主分支，为每个前沿工单派发独立子 Agent（专属 Git Worktree 并行跑 TDD），Merger 滚动合流。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 阶段 5 与 阶段 6 核心卡点 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 阶段 5 真机验收 -->
+          <div class="deep-card rounded-xl p-5 space-y-3">
+            <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+              阶段 5 真实浏览器验收卡点
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>为什么单测绿灯无法替代真机？</strong> 纯内存测试无法探测 CSS 层叠遮挡、DOM 点击冒泡拦截与 React SSR 水合假死。
+            </p>
+            <div class="space-y-1 text-xs text-slate-700">
+              <div>• <strong>端口探活</strong>：<code>curl -s http://localhost:3030</code> 优先防伪绿</div>
+              <div>• <strong>水合锚点</strong>：严禁 <code>networkidle</code>，以特征输入框挂载为就绪准绳</div>
+              <div>• <strong>工具首选</strong>：macOS 优先 <code>ego-browser</code>（真实Cookie/可人工接管）；CI 环境降级 <code>Playwright</code></div>
+              <div>• <strong>时间盒纪律</strong>：≤ 5 条 P0 冒烟 / ≤ 15 分钟</div>
+            </div>
+          </div>
+
+          <!-- 阶段 6 双轴审查 -->
+          <div class="deep-card rounded-xl p-5 space-y-3">
+            <div class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+              阶段 6 双轴代码审查门禁
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>规范轴与需求轴并行审查</strong>：双轴分别由两个子代理独立运行，防止互相掩盖。
+            </p>
+            <div class="space-y-1 text-xs text-slate-700">
+              <div>• <strong>规范轴 (Standards)</strong>：Fowler 12 大坏味道（冗余代码、过度设计、中间人）+ 安全零泄漏 + 移动端 44px 热区 + 全量中文</div>
+              <div>• <strong>需求轴 (Spec)</strong>：核销全部 User Stories，遗漏直接判 FAIL</div>
+              <div>• <strong>三档分流处置</strong>：本次修（触及核心重回复验截图）/ 转专项（入遗留事项）/ 驳回（ADR 已有决策）</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 四、实战杠杆与工程剪裁 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">4</span>
+          思维快捷键工具箱与快慢车道剪裁
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- 思维快捷键 -->
+          <div class="deep-card rounded-xl p-6 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span>🕹️ 4 大认知纠偏思维快捷键</span>
+            </h3>
+            <p class="text-xs text-slate-500">
+              用于打破大模型顺从讨好与局部修补偏置的一句话杠杆（按需使用，不强加于流程）：
+            </p>
+            <div class="space-y-2 text-xs">
+              <div class="p-2.5 bg-slate-50 rounded border border-slate-200">
+                <strong class="text-blue-700 block">1. 对抗性审查（阶段 1）</strong>
+                <span class="text-slate-600">「对这个方案做对抗性审查，优先寻找能推翻核心假设的反例，不要帮它找理由。」</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded border border-slate-200">
+                <strong class="text-blue-700 block">2. 第一性原理（阶段 1/2）</strong>
+                <span class="text-slate-600">「不要基于现有方案继续设计，从第一性原理重新分析这个问题到底该怎么解。」</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded border border-slate-200">
+                <strong class="text-blue-700 block">3. 奥卡姆剃刀（阶段 6 审查）</strong>
+                <span class="text-slate-600">「调用 /improve-codebase-architecture 运行 Deletion Test，清除无意义抽象层。」</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded border border-slate-200">
+                <strong class="text-blue-700 block">4. 消融实验（阶段 7 交付）</strong>
+                <span class="text-slate-600">「给这几项改动设计消融实验，逐项评估独立贡献，删除搭便车的伪优化。」</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 快慢车道剪裁 -->
+          <div class="deep-card rounded-xl p-6 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span>🚦 三档车道自适应工程剪裁</span>
+            </h3>
+            <p class="text-xs text-slate-500">
+              拒绝教条主义，按改动规模与协作形态自适应分流：
+            </p>
+            <div class="space-y-2.5 text-xs">
+              <div class="p-2.5 bg-emerald-50/50 rounded border border-emerald-200">
+                <strong class="text-emerald-800 block">🟢 快车道 (Fast Track)</strong>
+                <span class="text-slate-600">纯文案、极简样式或单点小修复 ──> 免写大 Spec，直接 <code>/implement + TDD</code>，单测保证接缝，秒级交付。</span>
+              </div>
+              <div class="p-2.5 bg-amber-50/50 rounded border border-amber-200">
+                <strong class="text-amber-800 block">🟡 标准车道 (Standard Track)</strong>
+                <span class="text-slate-600">单会话独立新功能 ──> <code>/to-spec</code> ➔ <code>/qa-test-planner</code> ➔ <code>/implement</code>（跳过 3A 碎工单直接从 spec 推进）➔ 浏览器真机验收 ➔ 双轴审查。</span>
+              </div>
+              <div class="p-2.5 bg-red-50/50 rounded border border-red-200">
+                <strong class="text-red-800 block">🔴 慢车道 (Full Track)</strong>
+                <span class="text-slate-600">跨模块、跨人交接或大型深重构 ──> 完整 7 阶段全流程，拆解工单 DAG，全量证据链归档。</span>
+              </div>
+            </div>
+            <div class="p-2 text-xs bg-slate-900 text-slate-200 rounded">
+              🛡️ <strong>六大红线底线</strong>：凡触及认证、流式对话、图像、视频、语音、计费，阶段 5 真机验收绝不可剪裁！
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 五、跨会话交接契约与避坑排障 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">5</span>
+          跨会话交接契约与排障心法
+        </h2>
+
+        <div class="deep-card rounded-xl p-6 space-y-6">
+          <!-- 交接双轨制 -->
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-slate-900">标准化交接文档机制 (/handoff 技能)</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              严禁将交接文档散落到系统临时目录（<code>/tmp</code>）！技能已强制收敛于项目工作区：
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono-code">
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded">
+                <span class="font-bold text-blue-700 block mb-1">同机跨会话续接 (单机流转)</span>
+                <code>.scratch/&lt;feature&gt;/handoff.md</code><br>
+                <span class="text-slate-500 font-sans">与 spec.md 和 qa-plan.md 同级归档，不污染代码树。</span>
+              </div>
+              <div class="p-3 bg-slate-50 border border-slate-200 rounded">
+                <span class="font-bold text-purple-700 block mb-1">跨团队成员交接 (版本化入库)</span>
+                <code>docs/handoff/YYYY-MM-DD-slug.md</code><br>
+                <span class="text-slate-500 font-sans">随 Git 提交入库，组员 pull 后可直接读取接力。</span>
+              </div>
+            </div>
+            <div class="p-3 bg-slate-900 text-slate-200 rounded text-xs font-mono-code">
+              💡 <strong>新会话接力指令：</strong> 「请阅读交接文档 .scratch/&lt;feature&gt;/handoff.md，严格按建议技能继续推进。」
+            </div>
+          </div>
+
+          <!-- 三层隔离探针 -->
+          <div class="space-y-3 border-t border-slate-100 pt-5">
+            <h3 class="text-sm font-bold text-slate-900">
+              遇到上游接口报错时的“三层隔离探针链”
+            </h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              遇到大模型报错（如 <code>No output generated</code> 或 403 欠费）时，切忌盲目乱改业务代码！在工作区写一个微脚本（如 <code>.scratch/&lt;feature&gt;/probe-ark.mts</code>）层层定界：
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono-code">
+              <div class="p-3 bg-slate-900 text-slate-200 rounded-lg space-y-1">
+                <span class="text-amber-400 font-bold block">一层：裸 curl 直连</span>
+                <span class="text-slate-400">直连官方域名 OpenAPI，排查欠费、防火墙或网络代理阻断。</span>
+              </div>
+              <div class="p-3 bg-slate-900 text-slate-200 rounded-lg space-y-1">
+                <span class="text-amber-400 font-bold block">二层：官方 SDK 微脚本</span>
+                <span class="text-slate-400">调用官方最简示例，排查 API Key 与签名算法版本兼容性。</span>
+              </div>
+              <div class="p-3 bg-slate-900 text-slate-200 rounded-lg space-y-1">
+                <span class="text-amber-400 font-bold block">三层：项目适配器接缝</span>
+                <span class="text-slate-400">前两层皆通，方可接入本地 Adapter 锁定数据格式与代码逻辑。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 六、互动实战测验 -->
+      <section class="space-y-6 border-t border-slate-200 pt-8">
+        <h2 class="text-2xl font-bold text-slate-900 font-serif-title flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">6</span>
+          知识检验与互动测验 (Interactive Quiz)
+        </h2>
+        <p class="text-sm text-slate-600">
+          点击选项检验学习成果，系统将实时给出正误反馈与深度解析：
+        </p>
+
+        <div class="space-y-6">
+          <!-- 题目 1 -->
+          <div class="deep-card rounded-xl p-6 space-y-4" id="quiz-1">
+            <div class="text-sm font-bold text-slate-900">
+              1. [单选] 为什么在 Next.js 项目中进行真实浏览器自动化测试时，严禁使用 <code>waitForLoadState('networkidle')</code>？
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 text-xs">
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(1, 'A', false)">
+                A. 因为 networkidle 是过时的废弃 API，已经被各大浏览器厂商移除
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(1, 'B', true)">
+                B. 因为开发模式下的 HMR 热更新心跳与 SSE 长连接会让网络永远不空闲，导致测试无谓超时崩溃
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(1, 'C', false)">
+                C. 因为 networkidle 会自动跳过 React 水合过程，直接触发虚假的按钮点击
+              </button>
+            </div>
+            <div id="quiz-feedback-1" class="hidden text-xs p-3 rounded-lg"></div>
+          </div>
+
+          <!-- 题目 2 -->
+          <div class="deep-card rounded-xl p-6 space-y-4" id="quiz-2">
+            <div class="text-sm font-bold text-slate-900">
+              2. [单选] 关于 <code>/implement-spec</code> 并发派发模式的运行机制，下列哪项表述是准确的？
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 text-xs">
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(2, 'A', false)">
+                A. 在当前分支上启动多个线程同时修改同一份本地代码文件
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(2, 'B', true)">
+                B. 创建集成主分支，为无阻塞前沿工单派发子 Agent 在独立 Git Worktree + 专属分支中并发跑 TDD，由 Merger 滚动合流
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(2, 'C', false)">
+                C. 跳过所有单元测试直接向远程仓库并发推送多个不同的 Pull Request
+              </button>
+            </div>
+            <div id="quiz-feedback-2" class="hidden text-xs p-3 rounded-lg"></div>
+          </div>
+
+          <!-- 题目 3 -->
+          <div class="deep-card rounded-xl p-6 space-y-4" id="quiz-3">
+            <div class="text-sm font-bold text-slate-900">
+              3. [单选] 在阶段 6 双轴代码审查中，若“本次修”改动触及了身份认证或流式对话等核心链路，流水线规定必须如何处理？
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 text-xs">
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(3, 'A', false)">
+                A. 只要单测全绿即可直接执行提交，无需再看浏览器
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(3, 'B', true)">
+                B. 阶段 5 既有截图当场作废，必须强制重新进入真实浏览器复验并追加新截图记录
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(3, 'C', false)">
+                C. 将改动自动转为遗留事项，推迟到下周版本再行修复
+              </button>
+            </div>
+            <div id="quiz-feedback-3" class="hidden text-xs p-3 rounded-lg"></div>
+          </div>
+
+          <!-- 题目 4 -->
+          <div class="deep-card rounded-xl p-6 space-y-4" id="quiz-4">
+            <div class="text-sm font-bold text-slate-900">
+              4. [单选] 使用 <code>/handoff</code> 技能生成交接文档时，关于落盘路径与正文内容，下列哪项符合规范？
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 text-xs">
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(4, 'A', false)">
+                A. 必须写入操作系统的 /tmp 临时目录，并将 spec.md 与代码全部全文复制进去
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(4, 'B', true)">
+                B. 严格收敛于工作区（.scratch/ 或 docs/handoff/），严禁全文冗余复制，一律采用相对路径引用
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(4, 'C', false)">
+                C. 交接文档必须包含会话中出现的所有未脱敏 API Key 与明文密码
+              </button>
+            </div>
+            <div id="quiz-feedback-4" class="hidden text-xs p-3 rounded-lg"></div>
+          </div>
+
+          <!-- 题目 5 -->
+          <div class="deep-card rounded-xl p-6 space-y-4" id="quiz-5">
+            <div class="text-sm font-bold text-slate-900">
+              5. [单选] 工作流是如何将提示词（Prompt）这类“软约束”转化为无法阳奉阴违的“物理硬门禁”的？
+            </div>
+            <div class="grid grid-cols-1 gap-2.5 text-xs">
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(5, 'A', false)">
+                A. 在提示词末尾加上“你必须发誓严格遵守”的严厉警告语
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(5, 'B', false)">
+                B. 每次对话将上万字的完整规约强行塞入每轮 Prompt
+              </button>
+              <button class="quiz-option p-3 rounded-lg border border-slate-200 text-left font-medium text-slate-700" onclick="answerQuiz(5, 'C', true)">
+                C. 通过真实物理截图落盘不可伪造、关键闸门技能物理禁调、以及严禁 AI 代理 git commit 形成硬锁
+              </button>
+            </div>
+            <div id="quiz-feedback-5" class="hidden text-xs p-3 rounded-lg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 课后答疑指引 -->
+      <footer class="deep-card rounded-xl p-6 bg-slate-900 text-slate-200 space-y-3">
+        <div class="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-wider">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          课后协同支持
+        </div>
+        <p class="text-sm font-bold text-white">
+          有任何细节不清楚？随时向 AI 助手提出追问！
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          AI Agent 是您的工程搭档与工作流助教。遇到具体业务场景不知道该选快车道还是慢车道、不知道探针怎么写，随时在终端提出问题，助手将实时为您提供具体到文件路径与代码的指导。
+        </p>
+        <div class="pt-2 text-xs text-slate-500 font-mono-code flex justify-between items-center border-t border-slate-800">
+          <span>归档位置：docs/teach/qa-workflow/lessons/0001-qa-browser-testing-workflow.html</span>
+          <span>AI-Aggregation 工程委员会 · 2026</span>
+        </div>
+      </footer>
+    </main>
+
+    <!-- Quiz 互动脚本 -->
+    <script>
+      const feedbacks = {
+        1: {
+          true: "✅ 正确！Next.js 在开发模式下存在 HMR 和 SSE 流式连接，网络永远不会处于 idle 状态；必须使用可见且可交互的客户端锚点（如输入框激活）来确保 React 水合已挂载完成。",
+          false: "❌ 错误。在本项目中严禁等待 networkidle，因为 HMR 与 SSE 连接会让网络永不空闲，盲等会导致测试超时报废。"
+        },
+        2: {
+          true: "✅ 正确！/implement-spec 的精髓正是创建 integration 分支，为前沿工单调度子代理在独立 Git Worktree 中并发开发，并由 Merger 滚动合流，最后由主 Agent 接管真实验收。",
+          false: "❌ 错误。并发派发模式严格遵循隔离原则，每个子 Agent 都在独立的 Worktree 物理目录中开发，绝不在同一目录下打架。"
+        },
+        3: {
+          true: "✅ 正确！审查阶段修复小缺陷最容易引发二次退化；触及核心链路时，阶段 5 的截图证据链必须作废并强制重回复验，杜绝假交付。",
+          false: "❌ 错误。只要改动触及核心链路，绝不可凭单测绿灯偷换真机可用，必须强制回退浏览器重走冒烟并截取新图。"
+        },
+        4: {
+          true: "✅ 正确！交接文档必须收敛于项目工作区（.scratch/ 或 docs/handoff/），严禁散落至系统临时目录，且一律使用相对路径引用，最大化节省上下文。",
+          false: "❌ 错误。严禁写入 /tmp（易被系统清理且脱离工作区），严禁大段复制 spec 或代码正文，严禁泄露敏感凭证。"
+        },
+        5: {
+          true: "✅ 正确！物理产物（截图文件真实落盘）、配置禁调（模型调不动闸门命令）、人工提交（AI 无法代理 git commit），三者共同构成了坚不可摧的工程硬门禁！",
+          false: "❌ 错误。口头警告与长篇大论依然是软约束，必须依靠物理证据链与权限闸门完成硬化。"
+        }
+      };
+
+      function answerQuiz(qNum, selectedOption, isCorrect) {
+        const quizCard = document.getElementById(`quiz-${qNum}`);
+        const feedbackDiv = document.getElementById(`quiz-feedback-${qNum}`);
+        const buttons = quizCard.querySelectorAll('.quiz-option');
+
+        buttons.forEach(btn => {
+          btn.classList.remove('correct', 'wrong');
+          btn.disabled = true;
+        });
+
+        const clickedBtn = Array.from(buttons).find(b => b.textContent.trim().startsWith(selectedOption));
+        if (clickedBtn) {
+          clickedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+        }
+
+        feedbackDiv.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-red-50', 'text-red-800', 'border-red-200');
+        if (isCorrect) {
+          feedbackDiv.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+          feedbackDiv.textContent = feedbacks[qNum].true;
+        } else {
+          feedbackDiv.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+          feedbackDiv.textContent = feedbacks[qNum].false;
+        }
+      }
+    </script>
+  </body>
+</html>

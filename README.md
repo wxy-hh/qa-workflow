@@ -32,34 +32,71 @@
 
 中小型改动按「适用范围与剪裁」规则走快车道，不搞教条瀑布流。
 
-## 安装（30 秒）
+## 安装
 
-**Claude Code**
+分**用户级**（本机所有项目可用）与**项目级**（随仓库提交，团队 clone 共享）两种作用域，按需要选择。
+
+### Claude Code
+
+**用户级**：
 
 ```bash
 claude plugin marketplace add wxy-hh/qa-workflow
 claude plugin install qa-workflow@wxy-hh
 ```
 
-**Codex**
+**项目级**（二选一）：
+
+- **方式 A：技能入库，clone 即用（推荐团队场景）**——在宿主仓库根目录执行一行安装脚本（自动平铺到正确目录，避免手工拷贝搞错层级。注意 `skills/` 下的 `engineering/`、`productivity/` 只是本仓库的源码分组，运行时要求 `.claude/skills/<技能名>/SKILL.md` 一层结构，**不要连分组目录一起拷**）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wxy-hh/qa-workflow/main/scripts/install.sh | bash
+# Kimi Code 项目级目录：curl -fsSL <同上地址> | bash -s -- ./.agents/skills
+```
+
+  脚本幂等、只覆盖本包自带的技能，不碰目录中的其他技能。然后 `git add .claude/skills` 提交，成员 clone 即用（首次需信任工作区）；跟进本仓库更新时重跑同一行命令即可，或改用 git submodule / subtree；
+- **方式 B：插件机制项目作用域**——本机已 add 过市场的前提下执行：
+
+```bash
+claude plugin install qa-workflow@wxy-hh --scope project
+```
+
+  该命令把启用记录写入项目 `.claude/settings.json`（`enabledPlugins`），提交后对所有成员生效。注意：外部源插件不会随 clone 自动下载，每名成员首次仍需在本机执行过一次 `claude plugin install`（任意作用域）。
+
+### Codex
+
+**用户级**：
 
 ```bash
 codex plugin marketplace add wxy-hh/qa-workflow
 codex plugin add qa-workflow@wxy-hh
 ```
 
-**Kimi Code / 其他 agent**（cursor、opencode、windsurf 等，经 skills.sh 安装器）
+**项目级**：插件本体仍安装在用户级缓存，项目级控制「本仓库是否启用」——在宿主仓库提交 `.codex/config.toml`：
+
+```toml
+[plugins."qa-workflow@wxy-hh"]
+enabled = true
+```
+
+项目需已被 trust；项目配置覆盖用户级配置，成员 clone 后本仓库自动启用该插件。
+
+### Kimi Code / 其他 agent（经 skills.sh 安装器）
+
+**项目级（默认）**：在宿主仓库根目录执行，技能落盘 `./.claude/skills/` 或 `./.agents/skills/`，提交入库即团队共享：
 
 ```bash
 npx skills@latest add wxy-hh/qa-workflow            # 按提示选择你的 agent
 # 或显式指定：npx skills@latest add wxy-hh/qa-workflow -a <agent>
 ```
 
-**手动安装**：克隆本仓库，把 `skills/` 下需要的技能目录拷入宿主项目的技能目录（`.claude/skills/` 或 `.agents/skills/`）。
+**用户级**：把技能目录改放到用户技能目录（如 Kimi Code 的 `~/.kimi-code/skills/`），本机所有项目共享。
+
+**手动安装**：推荐直接运行 `scripts/install.sh`（见上方方式 A，避免拷错层级）；或克隆本仓库后手动把 `skills/` 两个分组目录下需要的**技能文件夹**（不含 `engineering/`、`productivity/` 分组层）平铺拷入宿主项目的技能目录，正确形态为 `.claude/skills/to-spec/SKILL.md`（或 `.agents/skills/to-spec/SKILL.md`）。
 
 ## 快速开始
 
-技能装好后，在**宿主项目**里按顺序执行：
+技能装好后，**全程无需手动拷贝或编辑任何文件**——以下步骤都由 Agent 执行，文档生成、`CLAUDE.md`/`AGENTS.md` 指令块注入均为 Agent 自动写入，你只需在确认环节核对参数。在**宿主项目**里按顺序执行：
 
 0. **确认技能可见**：重开一个会话，让 Agent 列出可用技能（或直接输入 `/` 看补全），应能看到 `setup-qa-workflow`、`qa-test-planner`、`to-spec` 等；看不到时先查下方 FAQ；
 1. `/setup-matt-pocock-skills` —— 配置工单追踪（GitHub/GitLab/本地 markdown，无远端仓库的项目推荐本地 markdown）、分诊标签、领域文档位置；
@@ -79,15 +116,41 @@ npx skills@latest add wxy-hh/qa-workflow            # 按提示选择你的 agen
 | 会话交接 | `/handoff` | 跨人用 `docs/handoff/` 入库交接，同机续接用系统临时目录 |
 | 会话复盘 | `/retro` | 环境阻力与规范缺失改进建议 |
 
-## 更新与重装
+## 更新、卸载与重装
 
-- **插件通道**（Claude Code / Codex）：插件随市场源更新，按各自工具的更新机制执行；
+**更新**：
+
+- **插件通道**（Claude Code / Codex）：插件随市场源更新，按各自工具的更新机制执行（Claude Code 后台自动更新或 `claude plugin update`；Codex 用 `codex plugin marketplace upgrade`）；
 - **skills.sh 通道**：`npx skills@latest update`，再 `npx skills@latest add wxy-hh/qa-workflow` 领取新技能；
 - **重跑 setup**：`/setup-qa-workflow` 有幂等护栏——已生成 `docs/agents/qa-workflow.md` 时不覆盖任何文件，只重跑环境自检；项目参数（端口/命令/核心链路）变化时直接编辑 `docs/agents/qa-workflow.md`，无需重跑。
 
+**卸载**：
+
+```bash
+# Claude Code（按安装时的作用域加 -s project；不再需要市场源时再执行第二条）
+claude plugin uninstall qa-workflow@wxy-hh
+claude plugin marketplace remove wxy-hh
+
+# Codex
+codex plugin remove qa-workflow@wxy-hh
+codex plugin marketplace remove wxy-hh
+```
+
+- **Kimi Code / skills.sh / 手动安装**：运行卸载脚本（删除清单以 `plugin.json` 为准，只删本包技能、不碰其他技能）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wxy-hh/qa-workflow/main/scripts/uninstall.sh | bash
+```
+
+  或手动删除技能目录中本包带入的 20 个技能文件夹；存在 `skills-lock.json` 时同步删除对应条目；
+- **项目级启用痕迹**：删除宿主仓库 `.claude/settings.json` 的 `enabledPlugins` 条目、`.codex/config.toml` 的 `[plugins."qa-workflow@wxy-hh"]` 段（按使用过的通道清理）；
+- **setup 生成物**（所有通道通用，按需）：移除指令文件（`CLAUDE.md`/`AGENTS.md`）中的 QA 指令块、`docs/agents/qa-workflow.md`、`docs/agents/prompt-shortcuts.md`；`docs/agents/issue-tracker.md` 等基础配置与 `docs/handoff/` 交接档案属项目资产，通常保留。
+
+
 ## 常见问题（FAQ）
 
-- **装了技能但 Agent 看不到**：确认安装到了当前 agent 对应的技能目录（Claude Code 为 `.claude/skills/`，Kimi Code 为 `.agents/skills/`），并重开会话刷新技能清单；`npx skills add` 时用 `-a <agent>` 显式指定目标。
+- **宿主已装过 mattpocock/skills（如 `grill-me`、`to-spec`），再装本包会怎样**：技能以 `name` 为主键。同一技能目录安装时同名文件夹被本包覆盖（拿到带 qa-workflow 定制的版本，推荐）；跨通道混装（上游走插件 + 本包走项目目录）会出现重名条目，模型可能误调无定制的上游版导致验收钩子被静默跳过——**一个项目只留一份来源**。若宿主对上游技能有本地魔改，安装前先 diff 备份；若想保留上游原版不动，`/setup-qa-workflow` 的「技能定制核验与修复」步骤会对缺失的定制就地补注（幂等），但上游版本过新时注入锚点可能失配，需人工核对。
+- **装了技能但 Agent 看不到**：确认安装到了当前 agent 对应的技能目录（Claude Code 为 `.claude/skills/`，Kimi Code 为 `.agents/skills/`），并重开会话刷新技能清单；`npx skills add` 时用 `-a <agent>` 显式指定目标。手动拷贝时最常见的坑是多套了一层分组目录——正确形态是 `.claude/skills/<技能名>/SKILL.md`，不是 `.claude/skills/engineering/<技能名>/SKILL.md`。
 - **阶段 5 探活失败**：工作流内置三级自愈（首选端口 → 漂移区间 +30 → 后台拉起 dev 服务器）；仍失败时按 setup 输出的环境自检清单逐项排查（依赖未装、密钥缺失、worker 未起）。
 - **没有 ego-browser（非 macOS）**：属预期场景，阶段 5 自动降级 Playwright（MCP 或原生驱动），流水线不阻断；建议另行 `playwright install` 备好无头浏览器。
 - **生成的文档里残留 `{CORE_LINKS}` 等占位符**：说明 setup 的确认步骤被跳过——重跑 `/setup-qa-workflow`，或直接全文替换为项目的实际值。

@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### 修复与硬化
+
+- **阶段 5 浏览器工具防偷懒硬化 (Schema Bias 防线)**：堵死模型因存在 Playwright MCP 工具而擅自降级后台无头运行的漏洞；`claude-qa-directive.md`、`qa-workflow.md` 模板与实战指南强化规定 macOS 桌面开发机必须强制使用 `ego-browser` 弹出真实前台窗口进行验收；首步必须执行 `ego-browser --version` 命令行探活，未经探活直接调 Playwright 视为严重流程违规。
+
 ### 新增
 
 - `scripts/install.sh` / `scripts/uninstall.sh`：一行命令安装/卸载技能包（自动平铺、幂等、只覆盖本包技能，不误删宿主其他技能）。

@@ -6,7 +6,7 @@
 
 - 来源：https://github.com/mattpocock/skills
 - 许可：MIT License，Copyright (c) 2026 Matt Pocock
-- 快照时间：2026-10（对齐上游 main 分支）
+- 快照时间：2026-11（对齐上游 main 分支）
 - 范围：`skills/` 下除 `setup-qa-workflow`、`qa-test-planner` 外的全部技能
 - 本地改动：为配合 qa-workflow 流水线做了定制注入，注入点以「项目定制」标记注明；
   `implement`、`implement-spec` 中的 `{CORE_LINKS}` 为占位符，由 `/setup-qa-workflow` 在宿主项目

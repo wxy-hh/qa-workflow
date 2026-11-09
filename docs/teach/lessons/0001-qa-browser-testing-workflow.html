@@ -82,7 +82,7 @@
         <div class="flex flex-wrap gap-4 pt-2 text-xs text-slate-500 font-mono-code">
           <span>🎯 学习目标：掌握 7 大阶段执行、三大编码范式与真实验收</span>
           <span>⏱ 建议学习时长：20 分钟</span>
-          <span>📦 关联仓库：AI-aggregation Monorepo</span>
+          <span>📦 适用仓库：任意 Monorepo 宿主项目</span>
         </div>
       </header>
 
@@ -349,7 +349,7 @@ flowchart TD
               <strong>为什么单测绿灯无法替代真机？</strong> 纯内存测试无法探测 CSS 层叠遮挡、DOM 点击冒泡拦截与 React SSR 水合假死。
             </p>
             <div class="space-y-1 text-xs text-slate-700">
-              <div>• <strong>端口探活</strong>：<code>curl -s http://localhost:3030</code> 优先防伪绿</div>
+              <div>• <strong>端口探活</strong>：<code>curl -s http://localhost:&lt;端口&gt;</code> 优先防伪绿</div>
               <div>• <strong>水合锚点</strong>：严禁 <code>networkidle</code>，以特征输入框挂载为就绪准绳</div>
               <div>• <strong>工具首选</strong>：macOS 优先 <code>ego-browser</code>（真实Cookie/可人工接管）；CI 环境降级 <code>Playwright</code></div>
               <div>• <strong>时间盒纪律</strong>：≤ 5 条 P0 冒烟 / ≤ 15 分钟</div>

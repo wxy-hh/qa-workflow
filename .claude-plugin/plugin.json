@@ -1,6 +1,6 @@
 {
   "name": "qa-workflow",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "QA closed-loop engineering workflow for coding agents: spec-driven development, TDD, real-browser acceptance with evidence, and dual-axis review. 以质量保证为纲的研发闭环工作流。",
   "author": {
     "name": "位笑雨",

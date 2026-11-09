@@ -11,7 +11,7 @@ const TEXT_EXT = new Set(['.md', '.json', '.mjs', '.yml', '.yaml', '.sh', '.txt'
 const FORBIDDEN = [
   '3030', 'dev:web', 'dev-port', '@repo/', 'apps/web', 'gitee', 'bazi',
   'DESIGN.md', 'AI 聚合', 'AI聚合', '通义千问', '智谱', 'deepseek', 'agnes',
-  'tooling/scripts', 'AI-aggregation', '/Users/',
+  'AI-aggregation', '/Users/',
 ];
 
 const errors = [];
@@ -88,8 +88,8 @@ for (const s of skillDirs) {
 }
 
 // 5. 模板占位符只允许白名单集合
-const KNOWN_PLACEHOLDERS = new Set(['{DEV_COMMAND}', '{WEB_PORT}', '{E2E_COMMAND}', '{E2E_DIR}', '{CORE_LINKS}']);
-for (const f of files.filter((p) => rel(p).startsWith('skills/engineering/setup-qa-workflow/templates'))) {
+const KNOWN_PLACEHOLDERS = new Set(['{DEV_COMMAND}', '{WEB_PORT}', '{E2E_COMMAND}', '{E2E_DIR}', '{CORE_LINKS}', '{TEST_COMMAND}']);
+for (const f of files.filter((p) => rel(p).startsWith('skills/engineering/setup-qa-workflow/templates') && p.endsWith('.md'))) {
   const text = readFileSync(f, 'utf8');
   const re = /\{[A-Z_]+\}/g;
   let m;

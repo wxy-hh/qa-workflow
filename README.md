@@ -23,14 +23,36 @@
 [1. 需求对齐]   /grill-with-docs → 厘清边界，沉淀 GLOSSARY / ADR
 [2. 规格确立]   /to-spec → .scratch/<feature>/spec.md
 [3A. 工单拆解]  /to-tickets（仅跨会话交接或并发派发时触发）
-[3B. 测试规划]  /qa-test-planner → qa-plan.md（P0 冒烟、定位器、断言）
-[4. 编码实现]   /implement → TDD 红绿循环
-[5. 浏览器验收] 真实浏览器逐条执行 qa-plan（三级自愈探活、截图证据、FAIL 现场留存）
-[6. 双轴审查]   /code-review → Standards 规范轴 + Spec 需求轴对账表
-[7. 交付沉淀]   /pr 挂 Before/After 证据 → /retro 复盘
+[3B. 测试规划]  /qa-test-planner → qa-plan.md → qa-check plan → init 建基线并冻结计划
+[4. 编码实现]   /implement → TDD 红绿循环 + qa-run 生成不可覆盖的证据日志
+[5. 浏览器验收] 真实浏览器逐条执行 qa-plan → qa-check acceptance（输出对账表）
+[6. 双轴审查]   collect（发放 challenge）→ /code-review → 子代理自写原文并 seal → 三档分流 → 增量复审（≤2 轮）
+[7. 交付沉淀]   最终交付验证 → qa-check review → /pr 挂 Before/After 证据 → /retro 复盘
 ```
 
-中小型改动按「适用范围与剪裁」规则走快车道，不搞教条瀑布流。
+中小型改动按「适用范围与剪裁」规则走快车道，不搞教条瀑布流。车道在阶段 1 裁决，实现中发现判错时经用户确认只升不降。
+
+## 证据链与检查器（Schema 4）
+
+工作流的核心不是让 Agent「说完成了」，而是让每个完成声明都有机器可对账的产物：
+
+| 以前靠自述 | 现在靠产物 |
+| --- | --- |
+| 报告里粘贴的审查原文 | 有 challenge 时审查子代理自写 `review/r<n>-*.md` 并 `seal` 生成 `.source.json` 凭据；无 challenge 的旧轮次由主代理逐字落盘，编号与分流表逐条对账 |
+| 执行记录写 PASS | qa-run 日志里的 `[TC01-1] PASS 实测：…` 标记；unit/integration 写「测试文件 › 用例标题」绑定 |
+| 「我用的是真实输入」 | `scripts/` 静态扫描：绕过登录与脚本内登录硬失败，页面内模拟输入与响应注入标注 |
+| 「已修」 | 分流表「验证证据」列指向修复后产生的日志或截图 |
+| 人工逐行对照 spec | `qa-check acceptance` 输出的对账表：状态 + 冻结／当前断言 ↔ 实测值 |
+
+`/setup-qa-workflow` 会把三个零依赖检查器安装到宿主项目的 `tooling/scripts/`：
+
+- `qa-check.mjs <plan|acceptance|review> <feature-dir>`：阶段边界显式运行的聚合检查器；
+- `qa-run.mjs <feature-dir> <标签> -- <命令>`：带 tree 哈希与时间戳的不可覆盖证据日志；
+- `review-package.mjs <init|add|collect|seal> <feature-dir>`：开工前快照、范围白名单、审查包与审查来源凭据。
+
+审查来源按证据分级（ADR-0048）：`collect` 发放一次性 challenge；审查子代理自写原文并 `seal` 生成 `.source.json` 凭据，`qa-check review` 输出「来源核验」强度行——同 nonce 的 Claude Code 转录为「转录（强）」，只有自述凭据为「自述凭据（弱）」，都没有为「未核验（人工）」。强度行不改变 PASS / BLOCKED 语义，弱档不能称来源已核验。
+
+检查器只对机械可修的缺口硬失败（漏编号、漏标记、绑定写错）；实测值是否真的证明断言、证据语义是否成立，交给 `qa-check acceptance` 的对账表、独立审查和人工终审。`结果: PASS` 只称「机器校验通过」，不构成交付授权。
 
 ## 安装
 
@@ -100,8 +122,8 @@ npx skills@latest add wxy-hh/qa-workflow            # 按提示选择你的 agen
 
 0. **确认技能可见**：重开一个会话，让 Agent 列出可用技能（或直接输入 `/` 看补全），应能看到 `setup-qa-workflow`、`qa-test-planner`、`to-spec` 等；看不到时先查下方 FAQ；
 1. `/setup-matt-pocock-skills` —— 配置工单追踪（GitHub/GitLab/本地 markdown，无远端仓库的项目推荐本地 markdown）、分诊标签、领域文档位置；
-2. `/setup-qa-workflow` —— 探测项目参数（启动命令、端口、E2E、核心链路、技术栈），与你确认后生成 `docs/agents/qa-workflow.md`、拷贝 `docs/agents/prompt-shortcuts.md`、向 `CLAUDE.md`/`AGENTS.md` 注入 QA 门禁指令块、按需并入技术栈适配包。幂等，可安全重跑；
-3. **自检**：Agent 输出环境自检清单（dev 服务器探活、浏览器工具、密钥文件、异步链路），按清单补齐缺失项即完成接入。
+2. `/setup-qa-workflow` —— 探测项目参数（启动命令、端口、E2E、核心链路、技术栈），与你确认后生成 `docs/agents/qa-workflow.md`、拷贝 `docs/agents/prompt-shortcuts.md`、向 `CLAUDE.md`/`AGENTS.md` 注入 QA 门禁指令块、把三个零依赖检查器安装到 `tooling/scripts/`、按需并入技术栈适配包。幂等，可安全重跑；
+3. **自检**：Agent 输出环境自检清单（dev 服务器探活、浏览器工具、密钥文件、异步链路、`qa-check.mjs --help`），按清单补齐缺失项即完成接入。
 
 之后正常提需求即可，Agent 会在每轮回复首部声明门禁自检状态（阶段/车道/核心链路判定/验收计划/审查状态）。
 
@@ -109,12 +131,12 @@ npx skills@latest add wxy-hh/qa-workflow            # 按提示选择你的 agen
 
 | 场景 | 口令 | 走向 |
 | --- | --- | --- |
-| 新特性（多会话/跨模块/触及核心链路） | 「用 qa-workflow 做 XXX」或直接开聊 | 慢车道全流程：grill → spec → qa-plan → TDD → 浏览器验收 → 双轴审查 → PR 证据 |
-| 中型改动（单会话可完成） | 直接描述需求 | 跳过工单拆解：spec → qa-plan → implement → 验收 → 双轴审查 |
-| 小型修复（文案/样式/单点 Bug） | 直接描述 | 快车道：implement + TDD；触及 P0 链路时补 Standards 轴自查 |
+| 新特性（多会话/跨模块/触及核心链路） | 「用 qa-workflow 做 XXX」或直接开聊 | 慢车道全流程：grill → spec → to-tickets → qa-plan → TDD → 浏览器验收 → 双轴审查 → PR 证据 |
+| 中型改动（单会话可完成） | 直接描述需求 | 标准车道：grill → spec → qa-plan → implement → 验收 → 双轴审查 |
+| 小型修复（文案/样式/单点 Bug） | 直接描述 | 快车道：implement + TDD；触及核心链路时补 P0 浏览器验收 |
 | 计划没想清楚 | `/grill-me` | 逐题拷问决策树直到收敛 |
-| 会话交接 | `/handoff` | 跨人用 `docs/handoff/` 入库交接，同机续接用系统临时目录 |
-| 会话复盘 | `/retro` | 环境阻力与规范缺失改进建议 |
+| 会话交接 | `/handoff` | 跨人用 `docs/handoff/` 入库交接，同机续接写 `.scratch/<feature>/handoff.md` |
+| 会话复盘 | `/retro` | 以审查原文与工具轨迹为准，沉淀环境改进建议 |
 
 ## 更新、卸载与重装
 
@@ -151,7 +173,7 @@ curl -fsSL https://raw.githubusercontent.com/wxy-hh/qa-workflow/main/scripts/uni
 
 - **宿主已装过 mattpocock/skills（如 `grill-me`、`to-spec`），再装本包会怎样**：技能以 `name` 为主键。同一技能目录安装时同名文件夹被本包覆盖（拿到带 qa-workflow 定制的版本，推荐）；跨通道混装（上游走插件 + 本包走项目目录）会出现重名条目，模型可能误调无定制的上游版导致验收钩子被静默跳过——**一个项目只留一份来源**。若宿主对上游技能有本地魔改，安装前先 diff 备份；若想保留上游原版不动，`/setup-qa-workflow` 的「技能定制核验与修复」步骤会对缺失的定制就地补注（幂等），但上游版本过新时注入锚点可能失配，需人工核对。
 - **装了技能但 Agent 看不到**：确认安装到了当前 agent 对应的技能目录（Claude Code 为 `.claude/skills/`，Kimi Code 为 `.agents/skills/`），并重开会话刷新技能清单；`npx skills add` 时用 `-a <agent>` 显式指定目标。手动拷贝时最常见的坑是多套了一层分组目录——正确形态是 `.claude/skills/<技能名>/SKILL.md`，不是 `.claude/skills/engineering/<技能名>/SKILL.md`。
-- **阶段 5 探活失败**：工作流内置三级自愈（首选端口 → 漂移区间 +30 → 后台拉起 dev 服务器）；仍失败时按 setup 输出的环境自检清单逐项排查（依赖未装、密钥缺失、worker 未起）。
+- **阶段 5 探活失败**：先用项目探活命令检查端口与应用锚点，未就绪时后台拉起项目的 dev 命令；仍失败时按 setup 输出的环境自检清单逐项排查（依赖未装、密钥缺失、worker 未起）。
 - **没有 ego-browser（非 macOS）**：属预期场景，阶段 5 自动降级 Playwright（MCP 或原生驱动），流水线不阻断；建议另行 `playwright install` 备好无头浏览器。
 - **生成的文档里残留 `{CORE_LINKS}` 等占位符**：说明 setup 的确认步骤被跳过——重跑 `/setup-qa-workflow`，或直接全文替换为项目的实际值。
 - **想裁剪流程**：直接编辑宿主项目的 `docs/agents/qa-workflow.md`（它是生成物，归项目所有）；裁剪原则见其「流程自身的剪裁」一节。
@@ -179,7 +201,12 @@ skills/engineering/   工程技能：setup-qa-workflow、qa-test-planner、to-sp
                       grill-with-docs、diagnosing-bugs、improve-codebase-architecture、
                       codebase-design、domain-modeling、setup-matt-pocock-skills
 skills/productivity/  效能技能：grill-me、grilling、handoff、writing-great-skills
+docs/qa-workflow.md   核心规范模板（安装后在宿主项目落地为 docs/agents/qa-workflow.md）
 docs/guide.md         实施细则参考书（为什么这么做 + 怎么做）
+docs/adr/             QA 工作流自身的架构决策记录（Schema 4、证据绑定、审查来源核验等）
+docs/teach/           教学材料与学习记录
+tests/                检查器、审查包与文档契约测试
+skills/engineering/setup-qa-workflow/templates/  安装模板与 qa-check / qa-run / review-package
 ```
 
 ## 与上游的关系
@@ -189,7 +216,7 @@ docs/guide.md         实施细则参考书（为什么这么做 + 怎么做）
 ## 贡献
 
 - 新的 stack-pack、缺陷修复、规则改进：直接提 Issue 或 PR；
-- 提交前请跑 `node scripts/lint.mjs`（校验 frontmatter、占位符、内部链接与私货词）。
+- 提交前请跑 `node scripts/lint.mjs`（校验 frontmatter、占位符、内部链接与私货词）和 `node --test tests/*.test.mjs`（工具行为与文档契约）。
 
 ## License
 

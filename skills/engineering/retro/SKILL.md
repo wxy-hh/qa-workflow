@@ -8,7 +8,7 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
 
 ## Steps
 
-1. Call the Skill tool with `writing-great-skills` for the writing style guide.（项目定制，上游升级时保留本节：上游原文引用 `writing-for-agents`，本技能包 vendor 的对应技能名为 `writing-great-skills`。）
+1. Call the Skill tool with `writing-great-skills` for the writing style guide.
 
 2. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one.
 
@@ -42,4 +42,11 @@ You have access to several files in the repo:
 - `CLAUDE.md`/`AGENTS.md`: these files are pushed to the context window of any agent working in this repo. They should be used incredibly sparingly, usually only for **navigation pointers** to other files.
 - `CODING_STANDARDS.md`: this file is read during review, not implementation. Add **navigation pointers** to docs folders if the standards file gets more than 1,000 lines long.
 - Docs: use docs as references files, pointed to by other files. Look for existing docs before writing new ones.
-- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow the advice in the `writing-great-skills` skill.
+- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands.
+
+## 项目定制（上游升级时保留本节）
+
+- 以工具轨迹（命令、技能加载行、子代理调用）和实际产物（spec、qa-plan、`_qa/prechange/`、`scripts/`、证据日志、截图）为准，不以交付汇报或自检门禁的自述为准。
+- 审查结论以 `review/` 原文与子代理转录（Claude Code 会话目录下 `subagents/agent-*.jsonl`）为准，不以 review-report 为准；逐个编号核对分流表有无漏列、改档或编造。
+- 只列带出处（文件与行号、命令或日志路径）的事实与偏差，不给百分比、“完全符合”“标杆”这类结论。
+- 建议在新会话复盘，但不强制。

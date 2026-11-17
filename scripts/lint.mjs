@@ -18,10 +18,10 @@ const errors = [];
 const err = (msg) => errors.push(msg);
 const SELF = rel2 => rel2 === 'scripts/lint.mjs'; // 词表定义在自身，跳过私货词扫描
 
-// 收集仓库内全部文本文件（跳过 .git）
+// 收集仓库内全部文本文件（跳过版本控制、依赖与本地工具状态）
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
-    if (name === '.git' || name === 'node_modules') continue;
+    if (name === '.git' || name === 'node_modules' || name === '.workbuddy') continue;
     const p = join(dir, name);
     const st = statSync(p);
     if (st.isDirectory()) walk(p, out);

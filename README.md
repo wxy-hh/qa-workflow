@@ -191,7 +191,7 @@ curl -fsSL https://raw.githubusercontent.com/wxy-hh/qa-workflow/main/scripts/uni
 阶段 5 需要一个真实浏览器自动化工具，**本仓库不捆绑**，任选其一：
 
 - [`ego-browser`](https://github.com/citrolabs/ego-lite)（推荐，macOS）：真实登录态、可视窗口、人机接管、批处理省 token；
-- Playwright（MCP 或原生驱动）：跨平台降级通道，同时承担无头 CI 回归固化职责。
+- Playwright（MCP 或原生驱动）：跨平台降级通道，同时承担无头 CI 回归固化职责；原生 Node 驱动要求宿主根 `package.json` 将 `playwright` 声明为**根级直接开发依赖**，仅安装在工作区子包中不够，安装器只检测并报告缺口，不修改宿主清单。
 
 ## 仓库导览
 

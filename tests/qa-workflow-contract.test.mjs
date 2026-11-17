@@ -525,6 +525,24 @@ test('真实 dogfood 仍是不可冒充的发布门禁（QA-PROV TC17-2）', asy
   }
 });
 
+test('原生 Playwright 安装检测要求根级直接依赖且不修改宿主清单', async () => {
+  const [setup, readme] = await Promise.all([
+    read(paths.setup),
+    read('README.md'),
+  ]);
+  assert.match(setup, /根级直接开发依赖/);
+  assert.match(setup, /不得修改宿主 package\.json/);
+  assert.match(readme, /根级直接开发依赖/);
+});
+
+test('code-review 保留通用固定点路径且不限定前后台', async () => {
+  const content = await read(paths.codeReview);
+  assert.match(content, /git diff <fixed-point>\.\.\.HEAD/);
+  assert.match(content, /QA 工作流调用时/);
+  assert.match(content, /Issue both sub-agent calls together and aggregate the reports they return/);
+  assert.doesNotMatch(content, /Issue both sub-agent calls together, in the foreground/);
+});
+
 test('code-review 技能要求子代理自写原文并 seal，主代理不得转抄', async () => {
   for (const file of codeReviewPaths) {
     const content = await read(file);
